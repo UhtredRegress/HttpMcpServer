@@ -45,6 +45,41 @@ public class InvoiceQueryTools
             return "Error while querying unpaid invoice";
         }
     }
+
+
+    [McpServerTool, Description("Mark unpaid invoice as paid")]
+    public async Task<string> MarkPaidInvoice(string username, string apiKey, string invoiceName , string journalName)
+    {
+        try
+        {
+            _logger.LogInformation("Start authenticate user before query");
+            int uid = await _client.LoginOdoo(username, apiKey);
+
+            var foundUnpaidInvoice = await _client.GetUnpaidInvoiceByName(uid, apiKey, invoiceName);
+            
+            var journalId = await _client.GetJournalIdByName(uid, apiKey, journalName);
+            
+            var paymentId = await _client.CreatePaymentRecord(uid, apiKey, foundUnpaidInvoice, journalId, invoiceName);
+            
+            var result = await _client.PostPaymentWithId(uid, apiKey, paymentId, foundUnpaidInvoice.Id);
+
+            if (result == false)
+            {
+                return "Cannot mark this invoice as paid";
+            }
+            return "Success";
+        }
+        catch (InvalidDataException ex)
+        {
+            _logger.LogInformation("Catch Invalid Data Exception from the caller");
+            return ex.Message;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, ex.Message);
+            return "Error while mark unpaid invoice as paid";
+        }
+    }
     
     
 }

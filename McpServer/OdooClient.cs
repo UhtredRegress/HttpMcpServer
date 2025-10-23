@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json;
+using McpServer.Model;
 
 namespace McpServer;
 
@@ -33,8 +34,7 @@ public class OdooClient : IOdooClient
         };
         
         _logger.LogInformation("Start making http request to odoo api to login to the server");
-        var response = await _http.PostAsync($"{_config["ODOO:BASE_URL"]}/jsonrpc",
-            new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json"));
+        var response = await _http.PostAsJsonAsync($"{_config["ODOO:BASE_URL"]}/jsonrpc", payload);
         
         var json = await response.Content.ReadAsStringAsync();
         using var doc = JsonDocument.Parse(json);
@@ -203,7 +203,7 @@ public class OdooClient : IOdooClient
                     "get_html",
                     new object[]
                     {
-                        reportId, // Example: 2 (the id of the Profit & Loss report)
+                        reportId, 
                         new Dictionary<string, object>
                         {
                             { "date_from", "2025-01-01" },
@@ -270,9 +270,241 @@ public class OdooClient : IOdooClient
             id = 1
         };
 
-        _logger.LogInformation("Start making http request to get the report id");
+        _logger.LogInformation("Start making http request to get sales order");
         var response = await _http.PostAsJsonAsync($"{_config["ODOO:BASE_URL"]}/jsonrpc", 
             payload);
         return await response.Content.ReadAsStringAsync();
+    }
+
+    public async Task<string> QueryTopSellingProduct(int uid, string apiKey)
+    {
+        _logger.LogInformation("Create payload to make request to odoo api");
+        var payload = new
+        {
+            jsonrpc = "2.0",
+            method = "call",
+            @params = new
+            {
+                service = "object",
+                method = "execute_kw",
+                args = new object[]
+                {
+                    _config["ODOO:DATABASE"],
+                    uid,
+                    apiKey,
+                    "sale.order.line",
+                    "read_group",
+                    new object[]
+                    {
+                        new object[]
+                        {
+                            new object[] { "state", "in", new string[] { "sale", "done" } }
+                        }, // domain
+                        new string[] { "product_id", "product_uom_qty:sum" }, // fields
+                        new string[] { "product_id" }, // groupby
+                        0, // offset    
+                        10, // limit
+                        "product_uom_qty desc" // orderby
+                    }
+                }
+            },
+            id = 1
+        };
+        
+        _logger.LogInformation("Start making http request to get the top selling product");
+        var response = await _http.PostAsJsonAsync($"{_config["ODOO:BASE_URL"]}/jsonrpc", 
+            payload);
+        return await response.Content.ReadAsStringAsync();
+    }
+
+    public async Task<Invoice> GetUnpaidInvoiceByName(int uid, string apiKey, string invoiceName)
+    {
+        _logger.LogInformation("Create payload to make request to odoo api"); 
+        var payload = new
+        {
+            jsonrpc = "2.0",
+            method = "call",
+            @params = new
+            {
+                service = "object",
+                method = "execute_kw",
+                args = new object[]
+                {
+                    _config["ODOO:DATABASE"],
+                    uid,
+                    apiKey,
+                    "account.move",
+                    "search_read",
+                    new object[]
+                    {
+                        new object[]
+                        {
+                            new object[] { "name", "=", invoiceName }
+                        }
+                    },
+                    new
+                    {
+                        fields = new[] { "id", "partner_id", "amount_total", "currency_id" },
+                        limit = 1
+                    }
+                }
+            }
+        };
+
+        var response = await _http.PostAsJsonAsync($"{_config["ODOO:BASE_URL"]}/jsonrpc", payload);
+        var json = await response.Content.ReadAsStringAsync(); 
+        
+        using var obj = JsonDocument.Parse(json);
+
+        if (obj.RootElement.TryGetProperty("error", out var error))
+        {
+            _logger.LogInformation("There was error while trying to get the invoice with the name {InvoiceName}", invoiceName);
+            throw new InvalidDataException(error.GetString());
+        }
+        
+        var resultJson = obj.RootElement.GetProperty("result");
+
+     
+        if (resultJson.GetArrayLength() <= 0 )
+        {
+            _logger.LogInformation("Not found any result with the invoice name {InvoiceName}", invoiceName);
+            throw new InvalidDataException($"Not found unpaid invoice with the name {invoiceName}");
+        }
+        
+        
+        return JsonSerializer.Deserialize<Invoice>(resultJson[0]);
+    }
+
+    public async Task<int> GetJournalIdByName(int uid, string apiKey, string journalName)
+    {
+        _logger.LogInformation("Create payload to make request by journal id by {name}", journalName);
+        var payload = new
+        {
+            jsonrpc = "2.0",
+            method = "call",
+            @params = new
+            {
+                service = "object",
+                method = "execute_kw",
+                args = new object[]
+                {
+                    _config["ODOO:DATABASE"],  // Your database name
+                    uid,                       // User ID (from login)
+                    apiKey,                    // API key or password
+                    "account.journal",         // Model name
+                    "search_read",             // Method name
+                    new object[]
+                    {
+                        new object[]
+                        {
+                            new object[] { "name", "ilike", journalName } // <-- search by name
+                        }
+                    },
+                    new
+                    {
+                        fields = new[] { "id", "name", "type" },
+                        limit = 1
+                    }
+                }
+            }
+        };
+        
+        _logger.LogInformation("Start making http request to get the journal id");
+        var response = await _http.PostAsJsonAsync($"{_config["ODOO:BASE_URL"]}/jsonrpc", payload); 
+        var json = await response.Content.ReadAsStringAsync();
+        
+        using var obj = JsonDocument.Parse(json);
+        if (obj.RootElement.TryGetProperty("error", out var error))
+        {
+            _logger.LogInformation("Error while trying to make request");
+            throw new InvalidDataException(error.GetString());
+        }
+        
+        return obj.RootElement.GetProperty("result")[0].GetProperty("id").GetInt32();
+    }
+
+    public async Task<int> CreatePaymentRecord(int uid, string apiKey, Invoice invoice, int journalId, string invoiceName)
+    {
+        var payload = new
+        {
+            jsonrpc = "2.0",
+            method = "call",
+            @params = new
+            {
+                service = "object",
+                method = "execute_kw",
+                args = new object[]
+                {
+                    _config["ODOO:DATABASE"],
+                    uid,
+                    apiKey,
+                    "account.payment.register",
+                    "create",
+                    new object[]
+                    {
+                        new Dictionary<string, object>
+                        {
+                            { "amount", invoice.Amount }, // Payment amount
+                            { "journal_id", journalId },   // Bank or Cash Journal ID
+                            { "payment_date", DateTime.UtcNow.ToString("yyyy-MM-dd") },
+                            { "communication", $"Payment for Invoice {invoiceName}" }
+                        }
+                    },
+                    new Dictionary<string, object> // CONTEXT
+                    {
+                        { "context", new Dictionary<string, object>
+                            {
+                                { "active_model", "account.move" },
+                                { "active_ids", new int[] { invoice.Id } }
+                            }
+                        }
+                    }
+                }
+            }
+        };
+
+        var response = await _http.PostAsJsonAsync($"{_config["ODOO:BASE_URL"]}/jsonrpc", payload);
+        var json = await response.Content.ReadAsStringAsync();
+        
+        using var obj = JsonDocument.Parse(json);
+        return obj.RootElement.GetProperty("result").GetInt32();
+    }
+
+    public async Task<bool> PostPaymentWithId(int uid, string apiKey, int paymentId, int invoiceId)
+    {
+        var payload = new
+        {
+            jsonrpc = "2.0",
+            method = "call",
+            @params = new
+            {
+                service = "object",
+                method = "execute_kw",
+                args = new object[]
+                {
+                    _config["ODOO:DATABASE"],
+                    uid,
+                    apiKey,
+                    "account.payment.register",
+                    "action_create_payments",
+                    new object[] { paymentId },
+                    new Dictionary<string, object>
+                    {
+                        { "context", new Dictionary<string, object>
+                            {
+                                { "active_model", "account.move" },
+                                { "active_ids", new int[] { invoiceId } }
+                            }
+                        }
+                    }
+                }
+            }
+        };
+
+        var response = await _http.PostAsJsonAsync($"{_config["ODOO:BASE_URL"]}/jsonrpc", payload);
+        var json = await response.Content.ReadAsStringAsync();
+
+        using var doc = JsonDocument.Parse(json);
+        return doc.RootElement.GetProperty("result").GetProperty("res_id").GetInt32() != 0;
     }
 }
