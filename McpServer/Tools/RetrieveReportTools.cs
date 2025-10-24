@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using ModelContextProtocol.Server;
 
 namespace McpServer.Tools;
@@ -14,24 +15,21 @@ public class RetrieveReportTools
         _client = client;
     }
     
-    [McpServerTool]
-    public async Task<string> GetProfitAndLossReportInQuarter(string username, string apikey, int quarter, int year)
+    [McpServerTool, Description("This tool help aggregate total revenue and expenses in a quarter")]
+    public async Task<string> GetRevenueAndExpensesInQuarter(string username, string apikey, int quarter, int year)
     {
         try
         {
             _logger.LogInformation("Start login to odoo to retrieve uid");
             var uid = await _client.LoginOdoo(username, apikey);
-
-            _logger.LogInformation("Retrieve report id");
-            var reportId = await _client.RetrieveProfitAndLossReportId(uid, apikey);
-
+            
             _logger.LogInformation("Retrieve company id of user");
             var companyId = await _client.RetrieveCompanyId(uid, apikey);
 
             (string start, string end) = QuarterHelper.RetrieveQuarterRangeInTheYear(quarter, year);
 
             _logger.LogInformation("Retrieve report content");
-            return await _client.RetrieveProfitAndLossReport(uid, apikey, reportId, companyId, start, end);
+            return await _client.RetrieveRevenueAndExpensesInQuarter(uid, apikey, companyId, start, end);
         }
         catch (InvalidDataException ex)
         {

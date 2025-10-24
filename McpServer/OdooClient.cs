@@ -72,7 +72,7 @@ public class OdooClient : IOdooClient
                 method = "execute_kw",
                 args = new object[]
                 {
-                    _config["ODOO:DATABASE"],
+                    _config.GetValue<string>("ODOO:DATABASE") ?? throw new InvalidDataException("Error with configuration database name is null in env"),
                     uid,
                     apiKey,
                     "account.move",
@@ -170,8 +170,8 @@ public class OdooClient : IOdooClient
             id = 1
         };
         
-        var result = await _http.PostAsJsonAsync($"{_config["BASE_URL"]}/jsonrpc",
-            new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json"));
+        var result = await _http.PostAsJsonAsync($"{_config["ODOO:BASE_URL"]}/jsonrpc",
+            payload);
         var json = await result.Content.ReadFromJsonAsync<JsonElement>();
         var res = json.GetProperty("result")[0];
         if (json.TryGetProperty("error", out var error))
@@ -183,9 +183,22 @@ public class OdooClient : IOdooClient
         return res.GetProperty("company_id")[0].GetInt32();
     }
 
-    public async Task<string> RetrieveProfitAndLossReport(int uid, string apiKey,int reportId, int companyId, string startRange, string endRange)
+    public async Task<string> RetrieveRevenueAndExpensesInQuarter(int uid, string apiKey, int companyId, string startRange, string endRange)
     {
         _logger.LogInformation("Create payload to make request to odoo api");
+        
+        
+        
+        var domain = new List<object[]>
+        {
+            new object[] { "date", ">=", startRange },
+            new object[] { "date", "<=", endRange },
+            new object[] { "move_id.state", "=", "posted" },
+            new object[] { "account_id.internal_group", "in", new[] { "income", "expense" } },
+            new object[] {"company_id", "=", companyId}
+        };
+        
+        // Query move lines
         var payload = new
         {
             jsonrpc = "2.0",
@@ -199,28 +212,22 @@ public class OdooClient : IOdooClient
                     _config["ODOO:DATABASE"],
                     uid,
                     apiKey,
-                    "account.financial.html.report",
-                    "get_html",
-                    new object[]
+                    "account.move.line",
+                    "search_read",
+                    new object[] { domain.ToArray() },
+                    new Dictionary<string, object>
                     {
-                        reportId, 
-                        new Dictionary<string, object>
-                        {
-                            { "date_from", "2025-01-01" },
-                            { "date_to", "2025-03-31" },
-                            { "company_id", companyId },
-                            { "comparison", false }
-                        }
+                        { "fields", new[] { "account_id", "debit", "credit", "balance", "date", "name" } }
                     }
                 }
             },
-            id = 1
+            id = 2
         };
+
         
         _logger.LogInformation("Start making http request to get the report id");
         
-        var response = await _http.PostAsJsonAsync($"{_config["BASE_URL"]}/jsonrpc", 
-            new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json"));
+        var response = await _http.PostAsJsonAsync($"{_config["ODOO:BASE_URL"]}/jsonrpc", payload);
         var json = await response.Content.ReadFromJsonAsync<JsonElement>();
         
         if (json.TryGetProperty("error", out var error))
@@ -229,7 +236,7 @@ public class OdooClient : IOdooClient
             throw new InvalidDataException(error.ToString());
         }
         
-        return json.GetProperty("result").GetProperty("html")[0].GetString();
+        return string.Join(',',json.GetProperty("result").EnumerateArray());
     }
 
     public async Task<string> RetriveSalesOrderInQuarter(int uid, string apiKey, string startRange, string endRange)
@@ -464,9 +471,16 @@ public class OdooClient : IOdooClient
         };
 
         var response = await _http.PostAsJsonAsync($"{_config["ODOO:BASE_URL"]}/jsonrpc", payload);
-        var json = await response.Content.ReadAsStringAsync();
+        var json = await response.Content.ReadAsStringAsync();  
         
         using var obj = JsonDocument.Parse(json);
+
+        if (obj.RootElement.TryGetProperty("error", out var error))
+        {
+            _logger.LogInformation("Error while trying to make request");
+            throw new InvalidDataException(error.GetRawText());
+        }
+        
         return obj.RootElement.GetProperty("result").GetInt32();
     }
 
@@ -502,9 +516,10 @@ public class OdooClient : IOdooClient
         };
 
         var response = await _http.PostAsJsonAsync($"{_config["ODOO:BASE_URL"]}/jsonrpc", payload);
-        var json = await response.Content.ReadAsStringAsync();
+        var json = await response.Content.ReadAsStringAsync();  
 
         using var doc = JsonDocument.Parse(json);
-        return doc.RootElement.GetProperty("result").GetProperty("res_id").GetInt32() != 0;
+        var result = doc.RootElement.GetProperty("result");
+        return result.GetProperty("res_id").ValueKind == JsonValueKind.Number && result.GetProperty("res_id").GetInt32() != 0;
     }
 }

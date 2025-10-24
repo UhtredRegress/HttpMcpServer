@@ -1,7 +1,5 @@
 using System.ComponentModel;
-using System.Text;
 using ModelContextProtocol.Server;
-
 namespace McpServer.Tools;
 
 [McpServerToolType]
@@ -55,12 +53,16 @@ public class InvoiceQueryTools
             _logger.LogInformation("Start authenticate user before query");
             int uid = await _client.LoginOdoo(username, apiKey);
 
+            _logger.LogInformation("Start find unpaid invoice");
             var foundUnpaidInvoice = await _client.GetUnpaidInvoiceByName(uid, apiKey, invoiceName);
             
+            _logger.LogInformation("Find journal id by journal name");
             var journalId = await _client.GetJournalIdByName(uid, apiKey, journalName);
             
+            _logger.LogInformation("Create payment record in database");
             var paymentId = await _client.CreatePaymentRecord(uid, apiKey, foundUnpaidInvoice, journalId, invoiceName);
             
+            _logger.LogInformation("Post payment to mark as paid");
             var result = await _client.PostPaymentWithId(uid, apiKey, paymentId, foundUnpaidInvoice.Id);
 
             if (result == false)
@@ -80,6 +82,4 @@ public class InvoiceQueryTools
             return "Error while mark unpaid invoice as paid";
         }
     }
-    
-    
 }

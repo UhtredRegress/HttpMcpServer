@@ -11,8 +11,9 @@ builder.Services.AddMcpServer()
     .WithToolsFromAssembly();
 builder.WebHost.ConfigureKestrel(options =>
 {
-    options.ListenLocalhost(5000);
-});
+    options.ListenLocalhost(builder.Configuration.GetValue<int>("HOST_PORT"));
+}); 
+
 builder.Services.AddHttpClient<IOdooClient, OdooClient>();      
 var app = builder.Build();
 
