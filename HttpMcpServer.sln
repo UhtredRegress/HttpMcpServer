@@ -5,6 +5,10 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "McpServer", "McpServer\McpServer.csproj", "{BE8EBC0C-6C67-43CA-9187-7AF6C483004C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "test", "test\test.csproj", "{1A3EEFD8-E6A4-4D77-913F-909248CD55B0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JwkSetURL", "JwkSetURL\JwkSetURL.csproj", "{E9F6D493-293A-4F59-9D24-473AE9EF4D39}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -18,5 +22,13 @@ Global
 		{BE8EBC0C-6C67-43CA-9187-7AF6C483004C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BE8EBC0C-6C67-43CA-9187-7AF6C483004C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BE8EBC0C-6C67-43CA-9187-7AF6C483004C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1A3EEFD8-E6A4-4D77-913F-909248CD55B0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1A3EEFD8-E6A4-4D77-913F-909248CD55B0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1A3EEFD8-E6A4-4D77-913F-909248CD55B0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1A3EEFD8-E6A4-4D77-913F-909248CD55B0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E9F6D493-293A-4F59-9D24-473AE9EF4D39}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E9F6D493-293A-4F59-9D24-473AE9EF4D39}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E9F6D493-293A-4F59-9D24-473AE9EF4D39}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E9F6D493-293A-4F59-9D24-473AE9EF4D39}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
