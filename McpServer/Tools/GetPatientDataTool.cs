@@ -15,24 +15,12 @@ public class GetPatientDataTool
         _epicClient = epicClient;
         _postgresService = postgresService;
     }
-
-    [McpServerTool, Description("This tools help get access token")]
-    public async Task<string> GetAccessToken()
-    {
-        try
-        {
-            return await _epicClient.GetAccessToken();
-        }
-        catch (Exception ex)
-        {
-            return ex.Message;
-        }
-    }
+    
 
     [McpServerTool, Description(
          "This tool helps get patient data, extract json result string to show how many patient found and " +
          "detail of information found, after that prompt to the user if they want to use the tool to persist data into postgres, keep result of this tools to be the input of Persist Data Tool call")]
-    public async Task<string> GetPatientInformation(string family, string given, string birthdate, string accessToken)
+    public async Task<string> GetPatientInformation(string family, string given, string birthdate)
     {
         try
         {
@@ -50,7 +38,8 @@ public class GetPatientDataTool
             {
                 return "Bad request the birth date format must be yyyy-MM-dd";
             }
-
+    
+            var accessToken = await _epicClient.GetAccessToken();
             
             return await _epicClient.GetInformationOfPatient(family, given, birthdate, accessToken);
             
