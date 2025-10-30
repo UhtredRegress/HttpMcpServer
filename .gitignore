@@ -2,7 +2,6 @@
 **/bin/
 **/.idea/
 
-*.DotSettings
+*.DotSettings*
 *.env
-JwkSetURL
 test

@@ -34,6 +34,7 @@ public class EpicClient : IEpicClient
             { "iss", _config["EPIC:CLIENT_ID"] },
             { "sub", _config["EPIC:CLIENT_ID"] },
             { "aud", _config["EPIC:AUDIENCE"] },
+            { "kid", _config["EPIC:KID"]},  
             { "jti", Guid.NewGuid().ToString() },
             { "exp", DateTimeOffset.UtcNow.AddMinutes(4).ToUnixTimeSeconds() }
         };
