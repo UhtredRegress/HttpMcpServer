@@ -1,7 +1,7 @@
-using McpServer.DbContext;
-using McpServer.Model;
+using FHIRMcpServer.DbContext;
+using FHIRMcpServer.Model;
 
-namespace McpServer;
+namespace FHIRMcpServer;
 
 public class PostgresService : IPostgresService
 {

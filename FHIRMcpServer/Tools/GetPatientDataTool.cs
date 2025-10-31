@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Globalization;
+using FHIRMcpServer;
 using ModelContextProtocol.Server;
 
 namespace McpServer.Tools;

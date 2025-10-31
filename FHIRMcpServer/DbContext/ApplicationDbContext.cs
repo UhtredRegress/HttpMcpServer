@@ -1,7 +1,7 @@
-using McpServer.Model;
+using FHIRMcpServer.Model;
 using Microsoft.EntityFrameworkCore;
 
-namespace McpServer.DbContext;
+namespace FHIRMcpServer.DbContext;
 
 public class ApplicationDbContext : Microsoft.EntityFrameworkCore.DbContext
 {

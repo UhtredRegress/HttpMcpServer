@@ -1,4 +1,4 @@
-namespace McpServer.Model;
+namespace FHIRMcpServer.Model;
 
 public class Patient
 {
@@ -6,6 +6,4 @@ public class Patient
     public string FamilyName { get; set; }
     public string GivenName { get; set; }
     public string Data { get; set; }
-
-    
 }

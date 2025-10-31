@@ -1,4 +1,4 @@
-namespace McpServer;
+namespace FHIRMcpServer;
 
 public interface IPostgresService
 {

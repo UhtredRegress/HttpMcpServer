@@ -4,7 +4,7 @@ using System.Security.Cryptography;
 using System.Text.Json;
 using Microsoft.IdentityModel.Tokens;
 
-namespace McpServer;
+namespace FHIRMcpServer;
 
 public class EpicClient : IEpicClient
 {

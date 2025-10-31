@@ -3,11 +3,13 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "McpServer", "McpServer\McpServer.csproj", "{BE8EBC0C-6C67-43CA-9187-7AF6C483004C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ERPMcpServer", "ERPMcpServer\ERPMcpServer.csproj", "{BE8EBC0C-6C67-43CA-9187-7AF6C483004C}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "test", "test\test.csproj", "{1A3EEFD8-E6A4-4D77-913F-909248CD55B0}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JwkSetURL", "JwkSetURL\JwkSetURL.csproj", "{E9F6D493-293A-4F59-9D24-473AE9EF4D39}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FHIRMcpServer", "FHIRMcpServer\FHIRMcpServer.csproj", "{CD46A567-7BE9-4DCA-9780-8B6183A1A478}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -30,5 +32,9 @@ Global
 		{E9F6D493-293A-4F59-9D24-473AE9EF4D39}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E9F6D493-293A-4F59-9D24-473AE9EF4D39}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E9F6D493-293A-4F59-9D24-473AE9EF4D39}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CD46A567-7BE9-4DCA-9780-8B6183A1A478}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CD46A567-7BE9-4DCA-9780-8B6183A1A478}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CD46A567-7BE9-4DCA-9780-8B6183A1A478}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CD46A567-7BE9-4DCA-9780-8B6183A1A478}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
